@@ -7,7 +7,5 @@ go:
 
 go_import_path: go.mozilla.org/mozlogrus
 
-install: true
-
 before_install:
   - go get github.com/stretchr/testify/assert
