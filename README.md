@@ -5,14 +5,15 @@ A logging library which conforms to Mozilla's logging standard for [logrus](http
 ```go
 package main
 
-import "go.mozilla.org/mozlogrus"
 import (
 	log "github.com/Sirupsen/logrus"
+	"go.mozilla.org/mozlogrus"
 )
 
 func init() {
 	mozlogrus.Enable("ApplicationName")
 }
+
 func main() {
 	log.WithFields(log.Fields{
 		"animal": "walrus",
