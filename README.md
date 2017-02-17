@@ -25,12 +25,13 @@ func main() {
 ```json
 $ go run mozlogrus.go | jq
 {
-  "Timestamp": 1487083306055612200,
+  "Timestamp": 1487349663973687600,
+  "Time": "2017-02-17T16:41:03Z",
   "Type": "app.log",
   "Logger": "ApplicationName",
   "Hostname": "gator3",
   "EnvVersion": "2.0",
-  "Pid": 27544,
+  "Pid": 18061,
   "Severity": 4,
   "Fields": {
     "animal": "walrus",
