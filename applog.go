@@ -21,12 +21,12 @@ type AppLog struct {
 }
 
 // NewAppLog returns a loggable struct
-func NewAppLog(loggerName string, msg []byte) *AppLog {
+func NewAppLog(loggerName string, logType string, msg []byte) *AppLog {
 	now := time.Now().UTC()
 	return &AppLog{
 		Timestamp:  now.UnixNano(),
 		Time:       now.Format(time.RFC3339),
-		Type:       "app.log",
+		Type:       logType,
 		Logger:     loggerName,
 		Hostname:   hostname,
 		EnvVersion: "2.0",
