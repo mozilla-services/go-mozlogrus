@@ -6,8 +6,6 @@ import (
 	"os"
 	"time"
 
-	"go.mozilla.org/mozlog"
-
 	"github.com/sirupsen/logrus"
 )
 
@@ -40,12 +38,12 @@ type MozLogFormatter struct {
 }
 
 func (m *MozLogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
-	appLog := &mozlog.AppLog{
+	appLog := &AppLog{
 		Timestamp:  entry.Time.UTC().UnixNano(),
 		Time:       entry.Time.UTC().Format(time.RFC3339),
 		Type:       "app.log",
 		Logger:     m.LoggerName,
-		Hostname:   mozlog.Hostname(),
+		Hostname:   Hostname(),
 		EnvVersion: "2.0",
 		Pid:        os.Getpid(),
 		Severity:   int(entry.Level),
