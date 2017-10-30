@@ -1,6 +1,11 @@
 # mozlogrus [![GoDoc](https://godoc.org/go.mozilla.org/mozlogrus?status.svg)](https://godoc.org/go.mozilla.org/mozlogrus)
 A logging library which conforms to [Mozilla's logging standard](https://wiki.mozilla.org/Firefox/Services/Logging) for [logrus](https://github.com/Sirupsen/logrus).
 
+## Installation
+
+* ver 1: `go get gopkg.in/mozilla-services/go-mozlog.v1`
+* ver 2: `go get gopkg.in/mozilla-services/go-mozlog.v2`
+
 ## Example Usage
 ```go
 package main

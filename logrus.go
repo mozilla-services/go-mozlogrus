@@ -9,64 +9,82 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Enable enables mozlogrus
-func Enable(loggerName string) {
-	logrus.SetFormatter(&MozLogFormatter{
-		LoggerName: loggerName,
-	})
+var hostname string
+var pid int
 
+func init() {
+	var err error
+	hostname, err = os.Hostname()
+	if err != nil {
+		hostname = "unknown"
+	}
+
+	pid = os.Getpid()
+}
+
+// Enable changes the default logrus formatter to MozLogFormatter and
+// sets output to stdout
+func Enable(m *MozLogFormatter) {
+	logrus.SetFormatter(m)
 	logrus.SetOutput(os.Stdout)
 }
 
-// SetFormatterName the LoggerName for the logrus formatter
-func SetFormatterName(name string) {
-	logrus.SetFormatter(&MozLogFormatter{
-		LoggerName: name,
-	})
-}
-
-// prefixFieldClashes is from logrus package
-func prefixFieldClashes(data logrus.Fields) {
-	_, ok := data["msg"]
-	if ok {
-		data["fields.msg"] = data["msg"]
-	}
-}
-
 type MozLogFormatter struct {
-	LoggerName string
+	Name string
+	Type string
 }
 
 func (m *MozLogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
-	appLog := &AppLog{
-		Timestamp:  entry.Time.UTC().UnixNano(),
-		Time:       entry.Time.UTC().Format(time.RFC3339),
-		Type:       "app.log",
-		Logger:     m.LoggerName,
-		Hostname:   Hostname(),
+	t := entry.Time.UTC()
+	appLog := &appLog{
+		Timestamp:  t.UnixNano(),
+		Time:       t.Format(time.RFC3339),
+		Type:       m.Type,
+		Logger:     m.Name,
+		Hostname:   hostname,
 		EnvVersion: "2.0",
-		Pid:        os.Getpid(),
-		Severity:   int(entry.Level),
+		Pid:        pid,
+		Severity:   toSyslogSeverity(entry.Level),
 	}
 
-	data := make(logrus.Fields, len(entry.Data)+1)
+	// turn errors into strings
 	for k, v := range entry.Data {
 		switch v := v.(type) {
 		case error:
-			data[k] = v.Error()
-		default:
-			data[k] = v
+			entry.Data[k] = v.Error()
 		}
 	}
 
-	prefixFieldClashes(data)
-	data["msg"] = entry.Message
-
-	appLog.Fields = data
+	// prevent losing "msg" when we overwrite it with entry.Message
+	if _, ok := entry.Data["msg"]; ok {
+		entry.Data["fields.msg"] = entry.Data["msg"]
+	}
+	entry.Data["msg"] = entry.Message
+	appLog.Fields = entry.Data
 
 	serialized, err := json.Marshal(appLog)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to mashal fields to JSON, %v", err)
+		return nil, fmt.Errorf("Failed to marshal appLog to JSON, %v", err)
 	}
 	return append(serialized, '\n'), nil
+}
+
+// toSyslogSeverity converts logrus log levels to syslog ones
+func toSyslogSeverity(l logrus.Level) int {
+	switch l {
+	case logrus.PanicLevel:
+		return 1
+	case logrus.FatalLevel:
+		return 2
+	case logrus.ErrorLevel:
+		return 3
+	case logrus.WarnLevel:
+		return 4
+	case logrus.InfoLevel:
+		return 6
+	case logrus.DebugLevel:
+		return 7
+	default:
+		return 0
+	}
 }
