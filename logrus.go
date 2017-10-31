@@ -30,8 +30,8 @@ func Enable(m *MozLogFormatter) {
 }
 
 type MozLogFormatter struct {
-	Name string
-	Type string
+	LoggerName string
+	Type       string
 }
 
 func (m *MozLogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
@@ -40,7 +40,7 @@ func (m *MozLogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 		Timestamp:  t.UnixNano(),
 		Time:       t.Format(time.RFC3339),
 		Type:       m.Type,
-		Logger:     m.Name,
+		Logger:     m.LoggerName,
 		Hostname:   hostname,
 		EnvVersion: "2.0",
 		Pid:        pid,
