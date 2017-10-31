@@ -51,6 +51,11 @@ func (m *MozLogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 		Severity:   toSyslogSeverity(entry.Level),
 	}
 
+	// set a default type when it is empty
+	if appLog.Type == "" {
+		appLog.Type = "app.log"
+	}
+
 	// make a copy of entry.Data to prevent side effects
 	// when altering "msg" and error types
 	data := make(logrus.Fields, len(entry.Data)+1)

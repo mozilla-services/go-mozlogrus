@@ -3,10 +3,11 @@ A logging library which conforms to [Mozilla's logging standard](https://wiki.mo
 
 ## Installation
 
-* ver 1: `go get gopkg.in/mozilla-services/go-mozlog.v1`
-* ver 2: `go get gopkg.in/mozilla-services/go-mozlog.v2`
+`go get go.mozilla.org/mozlogrus`
 
-## Example Usage
+## Example
+
+### Basic Usage
 ```go
 package main
 
@@ -43,5 +44,16 @@ $ go run mozlogrus.go | jq
     "msg": "A group of walrus emerges from the ocean",
     "size": 10
   }
+}
+```
+
+### Custom Log Types
+
+```go
+func init() {
+    mozlogrus.EnableFormatter(&mozlogrus.MozLogFormatter{
+        LoggerName: "ApplicationName",
+        Type: "udp datagram",
+    })
 }
 ```
