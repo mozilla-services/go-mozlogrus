@@ -22,9 +22,13 @@ func init() {
 	pid = os.Getpid()
 }
 
-// Enable changes the default logrus formatter to MozLogFormatter and
-// sets output to stdout
-func Enable(m *MozLogFormatter) {
+// Enable sets stdout with idiotmatic mozlog formatting
+func Enable(loggerName string) {
+	EnableFormatter(&MozLogFormatter{LoggerName: loggerName, Type: "app.log"})
+}
+
+// EnableFormatter sets stdout logging with a custom MozLogFormatter
+func EnableFormatter(m *MozLogFormatter) {
 	logrus.SetFormatter(m)
 	logrus.SetOutput(os.Stdout)
 }
@@ -47,20 +51,25 @@ func (m *MozLogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 		Severity:   toSyslogSeverity(entry.Level),
 	}
 
-	// turn errors into strings
+	// make a copy of entry.Data to prevent side effects
+	// when altering "msg" and error types
+	data := make(logrus.Fields, len(entry.Data)+1)
 	for k, v := range entry.Data {
 		switch v := v.(type) {
 		case error:
-			entry.Data[k] = v.Error()
+			data[k] = v.Error()
+		default:
+			data[k] = v
 		}
 	}
 
 	// prevent losing "msg" when we overwrite it with entry.Message
-	if _, ok := entry.Data["msg"]; ok {
-		entry.Data["fields.msg"] = entry.Data["msg"]
+	if _, ok := data["msg"]; ok {
+		data["fields.msg"] = data["msg"]
 	}
-	entry.Data["msg"] = entry.Message
-	appLog.Fields = entry.Data
+
+	data["msg"] = entry.Message
+	appLog.Fields = data
 
 	serialized, err := json.Marshal(appLog)
 	if err != nil {

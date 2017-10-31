@@ -77,3 +77,30 @@ func TestMozLogFormatter(t *testing.T) {
 		}
 	}
 }
+
+func BenchmarkMozLogFormatter(b *testing.B) {
+
+	entry := logrus.WithFields(logrus.Fields{
+		"agent":     "benchmark agent",
+		"errno":     0,
+		"method":    "GET",
+		"path":      "/so/fassst",
+		"req_sz":    0,
+		"res_sz":    1024,
+		"t":         20,
+		"uid":       "123456",
+		"fxa_uid":   "123456",
+		"device_id": "7654321",
+		"msg":       "i will be replaced",
+	})
+
+	formatter := &MozLogFormatter{
+		LoggerName: "benchmarker",
+		Type:       "test.log",
+	}
+
+	for i := 0; i < b.N; i++ {
+		formatter.Format(entry)
+	}
+
+}
