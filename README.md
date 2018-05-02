@@ -57,3 +57,20 @@ func init() {
     })
 }
 ```
+
+### Publishing to Kinesis
+
+To send your logs directly into Kinesis, use the following code. Make sure you
+have an AWS account exported in your environment.
+
+```go
+hook, err := mozlogrus.NewKinesisHook("my_stream_name")
+logger := logrus.New()
+logger.Hooks.Add(hook)
+logger.Formatter = &mozlogrus.MozLogFormatter{LoggerName: "my_application"}
+
+logger.WithFields(logrus.Fields{
+      "fqdn":    getHostname(),
+      "sysinfo": sysinfo,
+}).Info("system informations retrieved successfully")
+```
