@@ -1,11 +1,11 @@
 package mozlogrus
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"time"
 
+	stackdriver "github.com/TV4/logrus-stackdriver-formatter"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,6 +27,13 @@ func Enable(loggerName string) {
 	EnableFormatter(&MozLogFormatter{LoggerName: loggerName, Type: "app.log"})
 }
 
+// EnableWithStackdriver uses the formatter in github.com/TV4/logrus-stackdriver-formatter, but first formats the message
+// using mozlog.
+func EnableWithStackdriver(loggerName string, options ...stackdriver.Option) {
+	m := &MozLogStackdriver{mozlogFormatter: &MozLogFormatter{LoggerName: loggerName, Type: "app.log"}, stackdriverFormatter: stackdriver.NewFormatter(options...)}
+	logrus.SetFormatter(m)
+}
+
 // EnableFormatter sets stdout logging with a custom MozLogFormatter
 func EnableFormatter(m *MozLogFormatter) {
 	logrus.SetFormatter(m)
@@ -38,7 +45,7 @@ type MozLogFormatter struct {
 	Type       string
 }
 
-func (m *MozLogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
+func (m *MozLogFormatter) format(entry *logrus.Entry) *appLog {
 	t := entry.Time.UTC()
 	appLog := &appLog{
 		Timestamp:  t.UnixNano(),
@@ -75,12 +82,32 @@ func (m *MozLogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 
 	data["msg"] = entry.Message
 	appLog.Fields = data
+	return appLog
+}
 
-	serialized, err := json.Marshal(appLog)
+func (m *MozLogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
+	appLog := m.format(entry)
+	serialized, err := appLog.ToJSON()
 	if err != nil {
 		return nil, fmt.Errorf("Failed to marshal appLog to JSON, %v", err)
 	}
 	return append(serialized, '\n'), nil
+}
+
+type MozLogStackdriver struct {
+	mozlogFormatter      *MozLogFormatter
+	stackdriverFormatter *stackdriver.Formatter
+}
+
+// Format the message using MozLog, then send to Stackdriver Formatter.
+func (m *MozLogStackdriver) Format(entry *logrus.Entry) ([]byte, error) {
+	appLog := m.mozlogFormatter.format(entry)
+	serialized, err := appLog.ToJSON()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to marshal appLog to JSON, %v", err)
+	}
+	entry.Message = string(serialized)
+	return m.stackdriverFormatter.Format(entry)
 }
 
 // toSyslogSeverity converts logrus log levels to syslog ones
